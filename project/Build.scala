@@ -12,7 +12,10 @@ object AkkaBookBuild extends Build {
       scalaVersion := "2.10.1",
       scalacOptions ++= Seq("-unchecked", "-feature", "-deprecation"),
       resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases",
-      libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.1.0"
+      libraryDependencies ++= Seq( "org.scalatest" %% "scalatest" % "2.0.M5b" % "test"
+                                 , "com.typesafe.akka" %% "akka-actor" % "2.1.0" 
+                                 , "com.typesafe.akka" %% "akka-testkit" % "2.1.0" 
+                                 )
     )
   )
 }
