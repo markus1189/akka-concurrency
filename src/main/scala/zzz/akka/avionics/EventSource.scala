@@ -8,9 +8,9 @@ object EventSource {
   case class UnregisterListener(listener: ActorRef)
 }
 
-trait EventSource { this: Actor =>
+trait EventSource {
   def sendEvent[T](event: T): Unit
-  def eventSourceReceive: Receive
+  def eventSourceReceive: Actor.Receive
 }
 
 trait ProductionEventSource extends EventSource { this: Actor =>
