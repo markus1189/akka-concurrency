@@ -1,4 +1,4 @@
-package zzz.akka.avionics
+package zzz.akka.avionics.crew
 
 import com.typesafe.config.ConfigFactory
 import akka.actor.{Props, ActorSystem}

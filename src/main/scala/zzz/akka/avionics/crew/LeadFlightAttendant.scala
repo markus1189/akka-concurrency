@@ -1,4 +1,4 @@
-package zzz.akka.avionics
+package zzz.akka.avionics.crew
 
 import scala.util.Random
 import scala.collection.JavaConverters._

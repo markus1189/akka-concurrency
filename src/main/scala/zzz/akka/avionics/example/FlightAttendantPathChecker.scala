@@ -2,7 +2,7 @@ package zzz.akka.avionics.example
 
 import akka.actor.{ActorSystem, Props}
 
-import zzz.akka.avionics.{LeadFlightAttendant, AttendantCreationPolicy}
+import zzz.akka.avionics.crew.{LeadFlightAttendant, AttendantCreationPolicy}
 
 object FlightAttendantPathChecker extends App {
   val system = akka.actor.ActorSystem("PlaneSimulation")

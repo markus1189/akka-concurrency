@@ -1,4 +1,4 @@
-package zzz.akka.avionics
+package zzz.akka.avionics.crew
 
 import akka.actor.Actor
 import scala.concurrent.duration._
