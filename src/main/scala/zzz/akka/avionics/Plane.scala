@@ -2,9 +2,11 @@ package zzz.akka.avionics
 
 import zzz.akka.avionics.crew.{ Pilots
                               , Pilot
+                              , PilotProvider
                               , CoPilot
                               , AutoPilot
-                              , LeadFlightAttendant}
+                              , LeadFlightAttendantProvider
+                              , LeadFlightAttendant }
 
 import akka.actor.{Actor, Props, ActorLogging, ActorRef}
 
@@ -13,6 +15,10 @@ object Plane {
 }
 
 class Plane extends Actor with ActorLogging {
+  this: AltimeterProvider
+        with PilotProvider
+        with LeadFlightAttendantProvider =>
+
   import Plane._
   import Altimeter._
   import EventSource._

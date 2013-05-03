@@ -53,7 +53,7 @@ class AutoPilot extends Actor {
 }
 
 trait PilotProvider {
-  def pilot: Actor = new Pilot
-  def copilot: Actor = new CoPilot
-  def autopilot: Actor = new AutoPilot
+  def newPilot: Actor     = new Pilot
+  def newCoPilot: Actor   = new CoPilot
+  def newAutoPilot: Actor = new AutoPilot
 }
