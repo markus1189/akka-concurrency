@@ -12,7 +12,7 @@ object Avionics {
   implicit val timeout = Timeout(5.seconds)
 
   val system = ActorSystem("PlaneSimulation")
-  val plane = system.actorOf(Props[Plane], "Plane")
+  val plane = system.actorOf(Props(Plane()), "Plane")
 
   def main(args: Array[String]) {
     val control = Await.result(
@@ -36,6 +36,10 @@ object Avionics {
     }
 
     system.scheduler.scheduleOnce(5.seconds) {
+      control ! ControlSurfaces.StickForward(0.01f)
+    }
+
+    system.scheduler.scheduleOnce(6.seconds) {
       system.shutdown()
     }
   }

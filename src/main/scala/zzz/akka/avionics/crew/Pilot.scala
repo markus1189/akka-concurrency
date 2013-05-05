@@ -8,40 +8,43 @@ object Pilots {
   case object RelinquishControl
 }
 
-class Pilot extends Actor {
+class Pilot( plane: ActorRef
+           , autopilot: ActorRef
+           , var controls: ActorRef
+           , altimeter: ActorRef
+           ) extends Actor {
+
   import Pilots._
   import Plane._
   import ControlSurfaces._
 
-  var controls: ActorRef = context.system.deadLetters
   var copilot: ActorRef = context.system.deadLetters
-  var autopilot: ActorRef = context.system.deadLetters
   val copilotName = context.system.settings.config.getString(
     "zzz.akka.avionics.flightcrew.copilotName")
 
   def receive = {
     case ReadyToGo =>
-      context.parent ! Plane.GiveMeControl
       copilot = context.actorFor(s"../$copilotName")
-      autopilot = context.actorFor("../AutoPilot")
     case controlSurfaces: ActorRef =>
       controls = controlSurfaces
   }
 }
 
-class CoPilot extends Actor {
+class CoPilot ( plane: ActorRef        
+              , autopilot: ActorRef    
+              , var controls: ActorRef 
+              , altimeter: ActorRef    
+              ) extends Actor {        
+
   import Pilots._
 
-  var controls: ActorRef = context.system.deadLetters
   var pilot: ActorRef = context.system.deadLetters
-  var autopilot: ActorRef = context.system.deadLetters
   val pilotName = context.system.settings.config.getString(
     "zzz.akka.avionics.flightcrew.pilotName")
 
   def receive = {
     case ReadyToGo =>
       pilot = context.actorFor(s"../$pilotName")
-      autopilot = context.actorFor("../AutoPilot")
   }
 }
 
@@ -53,7 +56,11 @@ class AutoPilot extends Actor {
 }
 
 trait PilotProvider {
-  def newPilot: Actor     = new Pilot
-  def newCoPilot: Actor   = new CoPilot
+  def newPilot( plane: ActorRef, autopilot: ActorRef, controls: ActorRef, altimeter: ActorRef): Actor =
+    new Pilot(plane,autopilot,controls,altimeter)
+
+  def newCoPilot( plane: ActorRef, autopilot: ActorRef, controls: ActorRef, altimeter: ActorRef): Actor =
+    new CoPilot(plane,autopilot,controls,altimeter)
+
   def newAutoPilot: Actor = new AutoPilot
 }
