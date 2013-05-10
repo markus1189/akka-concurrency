@@ -1,7 +1,7 @@
 package zzz.akka.avionics.crew
 
 import zzz.akka.avionics.{Plane, ControlSurfaces}
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{ActorRef, Actor, Terminated}
 
 object Pilots {
   case object ReadyToGo
@@ -37,6 +37,7 @@ class CoPilot ( plane: ActorRef
               ) extends Actor {        
 
   import Pilots._
+  import Plane._
 
   var pilot: ActorRef = context.system.deadLetters
   val pilotName = context.system.settings.config.getString(
@@ -45,6 +46,9 @@ class CoPilot ( plane: ActorRef
   def receive = {
     case ReadyToGo =>
       pilot = context.actorFor(s"../$pilotName")
+      context.watch(pilot)
+    case Terminated(_) =>
+      plane ! GiveMeControl
   }
 }
 
