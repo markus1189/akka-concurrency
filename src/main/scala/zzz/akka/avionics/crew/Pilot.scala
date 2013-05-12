@@ -53,10 +53,18 @@ class CoPilot ( plane: ActorRef
 }
 
 // TODO exercise for reader
-class AutoPilot extends Actor {
+class AutoPilot ( plane: ActorRef) extends Actor {
   import Pilots._
+  import Plane._
 
-  def receive = Actor.emptyBehavior
+  def receive = {
+    case ReadyToGo =>
+      plane ! RequestCoPilot
+    case CoPilotReference(copilot) =>
+      context.watch(copilot)
+    case Terminated(_) =>
+      plane ! GiveMeControl
+  }
 }
 
 trait PilotProvider {
@@ -66,5 +74,5 @@ trait PilotProvider {
   def newCoPilot( plane: ActorRef, autopilot: ActorRef, controls: ActorRef, altimeter: ActorRef): Actor =
     new CoPilot(plane,autopilot,controls,altimeter)
 
-  def newAutoPilot: Actor = new AutoPilot
+  def newAutoPilot(plane: ActorRef): Actor = new AutoPilot(plane)
 }

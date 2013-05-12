@@ -18,6 +18,8 @@ import scala.concurrent.Await
 
 object Plane {
   case object GiveMeControl
+  case object RequestCoPilot
+  case class CoPilotReference(reference: ActorRef)
 
   def apply() = new Plane with AltimeterProvider with PilotProvider with LeadFlightAttendantProvider
 }
@@ -44,11 +46,13 @@ class Plane extends Actor with ActorLogging {
   def actorForPilots(name: String) = context.actorFor("Pilots/" + name)
 
   def startEquipment() {
+    val plane = self
+
     val controls = context.actorOf(
       Props(new IsolatedResumeSupervisor with OneForOneStrategyFactory {
         def childStarter() {
           val alt = context.actorOf(Props(newAltimeter), "Altimeter")
-          context.actorOf(Props(newAutoPilot), "AutoPilot")
+          context.actorOf(Props(newAutoPilot(plane)), "AutoPilot")
           context.actorOf(Props(new ControlSurfaces(alt)), "ControlSurfaces")
         }
       }), "Equipment")
@@ -82,6 +86,7 @@ class Plane extends Actor with ActorLogging {
     startEquipment()
     startPeople()
     actorForControls("Altimeter") ! RegisterListener(self)
+    actorForControls("AutoPilot") ! ReadyToGo
     actorForPilots(pilotName) ! ReadyToGo
     actorForPilots(copilotName) ! ReadyToGo
   }
@@ -92,5 +97,7 @@ class Plane extends Actor with ActorLogging {
       sender ! actorForControls("ControlSurfaces")
     case AltitudeUpdate(altitude) =>
       log info(s"Altitude is now: $altitude")
+    case RequestCoPilot =>
+      sender ! CoPilotReference(actorForPilots(copilotName))
   }
 }
