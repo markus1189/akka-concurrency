@@ -18,8 +18,9 @@ import scala.concurrent.Await
 
 object Plane {
   case object GiveMeControl
-  case object RequestCoPilot
+  case object RequestPilots
   case class CoPilotReference(reference: ActorRef)
+  case class PilotReference(reference: ActorRef)
 
   def apply() = new Plane with AltimeterProvider with PilotProvider with LeadFlightAttendantProvider
 }
@@ -97,7 +98,8 @@ class Plane extends Actor with ActorLogging {
       sender ! actorForControls("ControlSurfaces")
     case AltitudeUpdate(altitude) =>
       log info(s"Altitude is now: $altitude")
-    case RequestCoPilot =>
+    case RequestPilots =>
       sender ! CoPilotReference(actorForPilots(copilotName))
+      sender ! PilotReference(actorForPilots(pilotName))
   }
 }

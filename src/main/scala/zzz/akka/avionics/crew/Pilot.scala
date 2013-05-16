@@ -52,18 +52,31 @@ class CoPilot ( plane: ActorRef
   }
 }
 
-// TODO exercise for reader
 class AutoPilot ( plane: ActorRef) extends Actor {
   import Pilots._
   import Plane._
 
+  private var pilot = context.system.deadLetters
+  private var copilot = context.system.deadLetters
+
+  var pilotTerminated = false
+  var copilotTerminated = false
+
   def receive = {
     case ReadyToGo =>
-      plane ! RequestCoPilot
+      plane ! RequestPilots
     case CoPilotReference(copilot) =>
+      this.copilot = copilot
       context.watch(copilot)
-    case Terminated(_) =>
-      plane ! GiveMeControl
+    case PilotReference(pilot) =>
+      this.pilot = pilot
+      context.watch(pilot)
+    case Terminated(actor) if actor == pilot =>
+      pilotTerminated = true
+      if (copilotTerminated) plane ! GiveMeControl
+    case Terminated(actor) if actor == copilot =>
+      copilotTerminated = true
+      if(pilotTerminated) plane ! GiveMeControl
   }
 }
 

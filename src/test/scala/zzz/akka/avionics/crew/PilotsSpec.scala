@@ -38,11 +38,11 @@ class PilotsSpec extends TestKit(ActorSystem("PilotsSpec",
 
   def nilActor: ActorRef = TestProbe().ref
 
-  val pilotPath = s"/user/TestPilots/$pilotName"
-  val copilotPath = s"/user/TestPilots/$copilotName"
-  val autopilotPath = s"/user/TestPilots/AutoPilot"
+  def pilotPath(sys: String) = s"/user/$sys/$pilotName"
+  def copilotPath(sys: String) = s"/user/$sys/$copilotName"
+  def autopilotPath(sys: String) = s"/user/$sys/AutoPilot"
 
-  def setupPilotsHierarchy(): ActorRef = {
+  def setupPilotsHierarchy(name: String): ActorRef = {
     implicit val askTimeout = Timeout(4.seconds)
 
     val a = system.actorOf(
@@ -52,31 +52,55 @@ class PilotsSpec extends TestKit(ActorSystem("PilotsSpec",
             context.actorOf(Props(new CoPilot(testActor, nilActor, nilActor, nilActor)), copilotName)
             context.actorOf(Props(new AutoPilot(testActor)), "AutoPilot")
           }
-      }), "TestPilots")
+      }), name)
 
     Await.result(a ? IsolatedLifeCycleSupervisor.WaitForStart, 3.seconds)
 
-    system.actorFor(copilotPath) ! Pilots.ReadyToGo
-    system.actorFor(autopilotPath) ! Plane.CoPilotReference(system.actorFor(copilotPath))
+    system.actorFor(copilotPath(name)) ! Pilots.ReadyToGo
+
+    system.actorFor(autopilotPath(name)) !
+      Plane.CoPilotReference(system.actorFor(copilotPath(name)))
+
+    system.actorFor(autopilotPath(name)) !
+      Plane.PilotReference(system.actorFor(pilotPath(name)))
 
     a
   }
 
-  describe("The Copilot and Autopilot") {
-    it("the copilot takes control after death of the pilot and autopilot after copilot's death") {
-      setupPilotsHierarchy()
+  describe("The Copilot") {
+    it("takes control if the pilot dies") {
+      val sysName = "TestCoPilot"
 
-      system.actorFor(pilotPath) ! PoisonPill
+      setupPilotsHierarchy(sysName)
 
-      expectMsg(GiveMeControl)
-
-      lastSender should equal (system.actorFor(copilotPath))
-
-      system.actorFor(copilotPath) ! PoisonPill
+      system.actorFor(pilotPath(sysName)) ! PoisonPill
 
       expectMsg(GiveMeControl)
 
-      lastSender should equal (system.actorFor(autopilotPath))
+      lastSender should equal (system.actorFor(copilotPath(sysName)))
+    }
+  }
+
+  describe("The Autopilot") {
+    it("takes control after death of the copilot") {
+      val sysName = "TestAutoPilot"
+      setupPilotsHierarchy(sysName)
+
+      system.actorFor(pilotPath(sysName)) ! PoisonPill
+      system.actorFor(copilotPath(sysName)) ! PoisonPill
+
+      expectMsg(GiveMeControl)
+
+      lastSender should equal (system.actorFor(autopilotPath(sysName)))
+    }
+
+    it("does not care if the copilot dies while the pilot is alive") {
+      val sysName = "TestAutoPilotNoTakeOver"
+      setupPilotsHierarchy(sysName)
+
+      system.actorFor(copilotPath(sysName)) ! PoisonPill
+
+      expectNoMsg()
     }
   }
 }
