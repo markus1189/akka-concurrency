@@ -9,6 +9,7 @@ import zzz.akka.avionics.crew.{ Pilots
                               , LeadFlightAttendant }
 
 import zzz.akka.avionics.supervisors._
+import zzz.akka.avionics.controlling._
 
 import akka.pattern.ask
 import akka.actor.{Actor, Props, ActorLogging, ActorRef}
@@ -22,11 +23,17 @@ object Plane {
   case class CoPilotReference(reference: ActorRef)
   case class PilotReference(reference: ActorRef)
 
-  def apply() = new Plane with AltimeterProvider with PilotProvider with LeadFlightAttendantProvider
+  def apply() = new Plane with AltimeterProvider
+                          with PilotProvider
+                          with HeadingIndicatorProvider
+                          with LeadFlightAttendantProvider
 }
 
 class Plane extends Actor with ActorLogging {
-  this: AltimeterProvider with PilotProvider with LeadFlightAttendantProvider =>
+  this: AltimeterProvider with AltimeterProvider
+                          with PilotProvider
+                          with HeadingIndicatorProvider
+                          with LeadFlightAttendantProvider =>
 
   import Plane._
   import Altimeter._
@@ -53,6 +60,7 @@ class Plane extends Actor with ActorLogging {
       Props(new IsolatedResumeSupervisor with OneForOneStrategyFactory {
         def childStarter() {
           val alt = context.actorOf(Props(newAltimeter), "Altimeter")
+          context.actorOf(Props(newHeadingIndicator), "HeadingIndicator")
           context.actorOf(Props(newAutoPilot(plane)), "AutoPilot")
           context.actorOf(Props(new ControlSurfaces(alt)), "ControlSurfaces")
         }
