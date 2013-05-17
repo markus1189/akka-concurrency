@@ -89,7 +89,7 @@ class PilotsSpec extends TestKit(ActorSystem("PilotsSpec",
       system.actorFor(pilotPath(sysName)) ! PoisonPill
       system.actorFor(copilotPath(sysName)) ! PoisonPill
 
-      expectMsg(GiveMeControl)
+      expectMsg(100.millis, GiveMeControl)
 
       lastSender should equal (system.actorFor(autopilotPath(sysName)))
     }
@@ -100,7 +100,7 @@ class PilotsSpec extends TestKit(ActorSystem("PilotsSpec",
 
       system.actorFor(copilotPath(sysName)) ! PoisonPill
 
-      expectNoMsg()
+      expectNoMsg(750.millis)
     }
   }
 }
