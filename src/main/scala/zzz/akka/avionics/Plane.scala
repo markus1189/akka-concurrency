@@ -22,6 +22,7 @@ object Plane {
   case object RequestPilots
   case class CoPilotReference(reference: ActorRef)
   case class PilotReference(reference: ActorRef)
+  case class Controls(ctrls: ActorRef)
 
   def apply() = new Plane with AltimeterProvider
                           with PilotProvider
@@ -60,9 +61,9 @@ class Plane extends Actor with ActorLogging {
       Props(new IsolatedResumeSupervisor with OneForOneStrategyFactory {
         def childStarter() {
           val alt = context.actorOf(Props(newAltimeter), "Altimeter")
-          context.actorOf(Props(newHeadingIndicator), "HeadingIndicator")
+          val heading = context.actorOf(Props(newHeadingIndicator), "HeadingIndicator")
           context.actorOf(Props(newAutoPilot(plane)), "AutoPilot")
-          context.actorOf(Props(new ControlSurfaces(alt)), "ControlSurfaces")
+          context.actorOf(Props(new ControlSurfaces(plane,alt,heading)), "ControlSurfaces")
         }
       }), "Equipment")
 
@@ -103,7 +104,7 @@ class Plane extends Actor with ActorLogging {
   def receive = {
     case GiveMeControl =>
       log info("Plane giving control")
-      sender ! actorForControls("ControlSurfaces")
+      sender ! Controls(actorForControls("ControlSurfaces"))
     case AltitudeUpdate(altitude) =>
       log info(s"Altitude is now: $altitude")
     case RequestPilots =>
